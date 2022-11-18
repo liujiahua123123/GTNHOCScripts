@@ -1,3 +1,10 @@
+local component = require("component")
+local event = require("event")
+local filesystem = require("filesystem")
+local serialization = require("serialization")
+local term = require("term")
+local coroutine = require("coroutine")
+
 ---
 -- CONST as Config
 ---
