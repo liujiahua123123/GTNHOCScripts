@@ -68,6 +68,9 @@ end
 ---
 -- Helper functions
 ---
+function string.startswith(text, prefix)
+    return text:find(prefix, 1, true) == 1
+end
 
 
 ---
