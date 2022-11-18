@@ -68,7 +68,7 @@ end
 ---
 -- Helper functions
 ---
-function string.startswith(text, prefix)
+local function startsWith(text, prefix)
     return text:find(prefix, 1, true) == 1
 end
 
@@ -81,7 +81,7 @@ local function getComponent(type, idPrefix) -- Get component
     local matchedK = nil
     local matchedV = nil
     for k,v in pairs(component.list(t)) do
-        if string.startswith(k, idPrefix) then
+        if startsWith(k, idPrefix) then
             matchedK = k
             matchedV = v
             matched = matched + 1
