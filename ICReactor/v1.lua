@@ -145,28 +145,41 @@ local design = ReactorDesign:fromTemplate(
               CFFFCFFFC
               FFCFFFCFF]])
 
+local function moveDamagedFuel()
+
+end
+
+local function moveDamagedCooler()
+
+end
+
 while true do
     local reactorItems = reactor.getAllItems()
     for i = 0, 54 do
         local item = reactorItems[i]
         local slotType = design:slotType(i)
-        local needToReplace = false
+
+        print("check i=" .. i .. " [" .. table.concat(item) .. "] type= " .. slotType)
+
         if (item == nil or item.maxDamage == 0) then
-            needToReplace = true
-        elseif (slotType == 'C') then
+            moveDamagedFuel()
+            goto continue
+        end
+
+        if (item ~= nil and slotType == 'C') then
             --replace nearly damaged
             printTable(item)
 
             local damaged = ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8
+            print("cooler damaged: " .. damaged)
             if damaged then
                 print("replace cool at " .. i)
-                needToReplace = true
+                moveDamagedCooler();
             end
         end
 
-        if needToReplace then
-
-        end
+        :: continue ::
     end
+    break
 end
 
