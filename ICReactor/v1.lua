@@ -78,16 +78,28 @@ function ReactorDesign:slotType(slotNum)
     return self.mapping[slotNum]
 end
 
+
 ---
 -- Helper functions
 ---
 local function startsWith(text, prefix)
     return text:find(prefix, 1, true) == 1
 end
+
 local function printTable(table)
     for k, v in pairs(table) do
         print(k, v)
     end
+end
+
+function isNullOrEmpty(table)
+    if table == nil then
+        return true;
+    end
+    for i, v in pairs(table) do
+        return false;
+    end
+    return true;
 end
 
 ---
@@ -115,27 +127,120 @@ local function getComponent(type, idPrefix)
     end
 end
 
-local spareTransposer = getComponent("transposer", "24e")
-local recycleTransposer = getComponent("transposer", "6e")
-local reactorTransposer = getComponent("transposer", "567")
+local function findNonEmptyIndex(item_in_box)
 
-local function getTransposerSide(transposer, side)
+    local boxLocation = 0
+
+    for idx = 0, #item_in_box, 1 do
+        if ((not isNullOrEmpty(item_in_box[idx])) and item_in_box[idx].size > 0) then
+            boxLocation = idx + 1
+            break
+        end
+    end
+    if boxLocation == 0 then
+        return nil
+    end
+    return boxLocation
+end
+
+local function getTransposerSide(t, side, name)
     return {
         getAllItems = function()
-            return transposer.getAllStacks(side).getAll()
+            return t.getAllStacks(side).getAll()
         end,
-        transposer = transposer,
-        side = side
+        transposer = t,
+        side = side,
+        moveItem = function(sourceSlot, target, count, targetSlot)
+            if count == nil then
+                count = 1
+            end
+            --if targetSlot == nil then
+            --    targetSlot = findEmptySlot(t.getAllStacks(targetSide).getAll())
+            --end
+            -- sourceSide, sinkSide, count, sourceSlot, sinkSlot
+            if targetSlot == nil then
+                t.transferItem(side, target.side, count, sourceSlot)
+            else
+                t.transferItem(side, target.side, count, sourceSlot, targetSlot + 1)
+            end
+        end,
+        name = name,
     }
 end
 
--- rm v1.lua && wget http://192.168.5.102/mc/v1.lua && v1
+local gpu = getComponent("gpu", "5a4")
+gpu.setDepth(gpu.maxDepth())
 
-local reactor = getTransposerSide(reactorTransposer, SIDES.down)
-local recycleFuelBox = getTransposerSide(recycleTransposer, SIDES.top)
-local recycleCoolBox = getTransposerSide(recycleTransposer, SIDES.west)
-local newFuelBox = getTransposerSide(spareTransposer, SIDES.top)
-local newCoolBox = getTransposerSide(spareTransposer, SIDES.west)
+local RED, YELLOW, GREEN, BLUE, PURPLE, CYAN, WHITE, BG, FG, BLACK, CLEAR
+function initColor()
+    local palette = {
+        0x21252B, 0xABB2BF, 0x21252B, 0xE06C75, 0x98C379, 0xE5C07B,
+        0x61AFEF, 0xC678DD, 0x56B6C2, 0xABB2BF
+    }
+    gpu.setBackground(palette[1])
+    gpu.setForeground(palette[2])
+    RED = function()
+        gpu.setForeground(palette[4])
+        return ""
+    end
+    YELLOW = function()
+        gpu.setForeground(palette[6])
+        return ""
+    end
+    GREEN = function()
+        gpu.setForeground(palette[5])
+        return ""
+    end
+    BLUE = function()
+        gpu.setForeground(palette[7])
+        return ""
+    end
+    PURPLE = function()
+        gpu.setForeground(palette[8])
+        return ""
+    end
+    CYAN = function()
+        gpu.setForeground(palette[9])
+        return ""
+    end
+    WHITE = function()
+        gpu.setForeground(palette[10])
+        return ""
+    end
+    BG = function()
+        gpu.setBackground(palette[1])
+        return ""
+    end
+    FG = function()
+        gpu.setForeground(palette[2])
+        return ""
+    end
+    BLACK = function()
+        gpu.setForeground(palette[3])
+        return ""
+    end
+end
+initColor()
+
+function colorPrint(color, string)
+    color()
+    print(string)
+    FG()
+end
+
+local transposer = getComponent("transposer", "5f6")
+local reactorThermostat = getComponent("redstone", "11d")
+local reactorThermostatSide = SIDES.down
+local reactorController = getComponent("redstone", '41c')
+local reactorEnabled = false
+local enableReactorSide = SIDES.east
+
+local chestNewFuel = getTransposerSide(transposer, SIDES.top, "chestNewFuel")
+local chestNewCooler = getTransposerSide(transposer, SIDES.north, "chestNewCooler")
+local chestDamagedCooler = getTransposerSide(transposer, SIDES.down, "chestDamagedCooler")
+
+local chestDamagedFuel = getTransposerSide(transposer, SIDES.south, "chestDamagedFuel")
+local reactor = getTransposerSide(transposer, SIDES.west, "reactor")
 
 local design = ReactorDesign:fromTemplate(
         [[CFFFCFFFC
@@ -145,41 +250,105 @@ local design = ReactorDesign:fromTemplate(
               CFFFCFFFC
               FFCFFFCFF]])
 
-local function moveDamagedFuel()
-
+function initReactor()
+    disableReactor()
 end
 
-local function moveDamagedCooler()
+function disableReactor()
+    reactorController.setOutput(enableReactorSide, 0)
+    reactorEnabled = false
+end
+
+function enableReactor()
+    reactorController.setOutput(enableReactorSide, 15)
+    reactorEnabled = true
+end
+
+function checkTemperature()
+    --if reactorController.getInput(enableReactorSide) == 0 then
+    --    print("Reactor is disabled. Ignoring temperature check.")
+    --    return
+    --end,"
+
+    if reactorThermostat.getInput(reactorThermostatSide) ~= 0 then
+        -- Temperature high
+        colorPrint(RED, "Disabling reactor due to high temperature!")
+        disableReactor()
+        return
+    end
 
 end
 
 while true do
+    checkTemperature()
+
     local reactorItems = reactor.getAllItems()
-    for i = 0, 54 do
+    for i = 0, 53 do
         local item = reactorItems[i]
         local slotType = design:slotType(i)
 
-        print("check i=" .. i .. " [" .. table.concat(item) .. "] type= " .. slotType)
+        print("Checking i=" .. i .. " type= " .. slotType)
+        --printTable(item)
 
-        if (item == nil or item.maxDamage == 0) then
-            moveDamagedFuel()
-            goto continue
-        end
+        --if (item == nil or item.maxDamage == 0) then
+        --    print("replace fuel at " .. i)
+        --    reactor.moveItem(i, chestDamagedFuel)
+        --    goto continue
+        --end
 
-        if (item ~= nil and slotType == 'C') then
+        if ((not isNullOrEmpty(item)) and slotType == 'C') then
             --replace nearly damaged
-            printTable(item)
-
-            local damaged = ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8
-            print("cooler damaged: " .. damaged)
+            --check if it is already damaged
+            local damaged = (item.maxDamage == 0 or ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8)
+            print("cooler damaged: " .. tostring(damaged))
             if damaged then
-                print("replace cool at " .. i)
-                moveDamagedCooler();
+                disableReactor()
+                print("remove cooler at " .. i)
+                reactor.moveItem(i, chestDamagedCooler)
+                item = nil
             end
         end
 
-        :: continue ::
+        -- 拿出来坏的 fuel
+        if ((not isNullOrEmpty(item)) and slotType == 'F') then
+            local damaged = (item.maxDamage == 0)
+            print("fuel damaged: " .. tostring(damaged))
+            if damaged then
+                print("remove fuel rod at " .. i)
+                reactor.moveItem(i, chestDamagedFuel)
+                item = nil
+            end
+        end
+
+        if (isNullOrEmpty(item)) then
+            local newItem = nil
+            local src = nil
+            if slotType == 'F' then
+                newItem = findNonEmptyIndex(chestNewFuel.getAllItems())
+                src = chestNewFuel
+            elseif slotType == 'C' then
+                newItem = findNonEmptyIndex(chestNewCooler.getAllItems())
+                src = chestNewCooler
+            end
+
+            if newItem == nil then
+                colorPrint(RED, "Nothing to move!! from " .. src.name)
+                disableReactor()
+            else
+                colorPrint(GREEN, "Moving from " .. src.name .. "." .. tostring(newItem) .. " to " .. reactor.name .. "." .. tostring(i))
+                src.moveItem(newItem, reactor, 1, i)
+            end
+        end
+
+
     end
+
+    --开机iff
+
+    for i = 0, 53 do
+        local item = reactorItems[i]
+        local slotType = design:slotType(i)
+    end
+
     break
 end
-
