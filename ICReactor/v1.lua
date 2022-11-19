@@ -262,6 +262,8 @@ function initReactor()
     disableReactor()
 end
 
+initReactor()
+
 function disableReactor()
     reactorController.setOutput(enableReactorSide, 0)
     reactorEnabled = false
@@ -272,16 +274,21 @@ function enableReactor()
     reactorEnabled = true
 end
 
+function isHighTemperature()
+    return reactorThermostat.getInput(reactorThermostatSide) ~= 0
+end
+
 function checkTemperature()
     --if reactorController.getInput(enableReactorSide) == 0 then
     --    print("Reactor is disabled. Ignoring temperature check.")
     --    return
     --end,"
 
-    if reactorThermostat.getInput(reactorThermostatSide) ~= 0 then
-        -- Temperature high
-        colorPrint(RED, "Disabling reactor due to high temperature!")
-        disableReactor()
+    if isHighTemperature() then
+        if reactorEnabled then
+            colorPrint(RED, "Disabling reactor due to high temperature!")
+            disableReactor()
+        end
         return
     end
 
@@ -317,16 +324,16 @@ while true do
             end
         end
 
-        -- 拿出来坏的 fuel
-        if ((not isNullOrEmpty(item)) and slotType == 'F') then
-            local damaged = (item.maxDamage == 0)
-            print("fuel damaged: " .. tostring(damaged))
-            if damaged then
-                print("remove fuel rod at " .. i)
-                reactor.moveItem(i, chestDamagedFuel)
-                item = nil
+            -- 拿出来坏的 fuel
+            if ((not isNullOrEmpty(item)) and slotType == 'F') then
+                local damaged = (item.maxDamage == 0)
+                if damaged then
+                    disableReactor()
+                    colorPrint(GREEN, "Remove fuel at" .. (i + 1))
+                    reactor.moveItem(i + 1, chestDamagedFuel)
+                    item = nil
+                end
             end
-        end
 
         if (isNullOrEmpty(item)) then
             local newItem = nil
@@ -339,24 +346,42 @@ while true do
                 src = chestNewCooler
             end
 
-            if newItem == nil then
-                colorPrint(RED, "Nothing to move!! from " .. src.name)
-                disableReactor()
-            else
-                colorPrint(GREEN, "Moving from " .. src.name .. "." .. tostring(newItem) .. " to " .. reactor.name .. "." .. tostring(i))
-                src.moveItem(newItem, reactor, 1, i)
+                if newItem == nil then
+                    colorPrint(RED, "Nothing to move!! from " .. src.name)
+                else
+                    colorPrint(GREEN, "Moving from " .. src.name .. "." .. tostring(newItem) .. " to " .. reactor.name .. "." .. tostring(i))
+                    src.moveItem(newItem, reactor, 1, i)
+                end
             end
         end
 
-
-    end
-
     --开机iff
 
-    for i = 0, 53 do
-        local item = reactorItems[i]
-        local slotType = design:slotType(i)
-    end
+        local anyEmpty = false
+        for i = 0, 53 do
+            local item = reactorItems[i]
+            local slotType = design:slotType(i)
+            if isNullOrEmpty(item) then
+                anyEmpty = true
+            end
+        end
 
-    break
+        if not anyEmpty and not isHighTemperature() and not reactorEnabled then
+            colorPrint(YELLOW, "Enabling reactor!")
+            enableReactor()
+        end
+        coroutine.yield()
+    end
+end
+
+local reactorThread = coroutine.create(checker)
+
+while true do
+    coroutine.resume(reactorThread)
+    local key = keyDown(1) -- capture key
+    if key == 115 then
+        colorPrint(RED, "BYE!")
+        disableReactor()
+        break ;
+    end
 end
