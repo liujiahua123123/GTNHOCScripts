@@ -87,6 +87,14 @@ local function startsWith(text, prefix)
 end
 
 local function printTable(table)
+    if table == nil then
+        print("nil table")
+        return
+    end
+    if isNullOrEmpty(table) then
+        print("empty table")
+        return
+    end
     for k, v in pairs(table) do
         print(k, v)
     end
