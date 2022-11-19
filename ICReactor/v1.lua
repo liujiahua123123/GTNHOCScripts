@@ -313,8 +313,6 @@ end
 
 local function checker()
     while true do
-        print("Running check")
-
         while true do
             if masterSwitch.getInput(masterSwitchSide) == 0 then
                 if reactorEnabled then
