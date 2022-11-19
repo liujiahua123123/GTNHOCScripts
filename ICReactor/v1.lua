@@ -237,7 +237,10 @@ function colorPrint(color, string)
 end
 
 local transposer = getComponent("transposer", "5f6")
-local reactorThermostat = getComponent("redstone", "11d")
+local masterSwitch = getComponent("redstone", "7dd")
+local masterSwitchSide = SIDES.top
+
+local reactorThermostat = getComponent("redstone", "ba1")
 local reactorThermostatSide = SIDES.down
 local reactorController = getComponent("redstone", '41c')
 local reactorEnabled = false
@@ -294,35 +297,62 @@ function checkTemperature()
 
 end
 
-while true do
-    checkTemperature()
+local function keyDown(t)
+    -- get key. it t defined, the function will wait the key elapsed t most.
+    local result
+    if t then
+        _, _, result = event.pull(t, "key_down")
+    else
+        _, _, result = event.pull("key_down")
+    end
+    if not result then
+        result = 0
+    end
+    return result
+end
 
-    local reactorItems = reactor.getAllItems()
-    for i = 0, 53 do
-        local item = reactorItems[i]
-        local slotType = design:slotType(i)
+local function checker()
+    while true do
+        print("Running check")
 
-        print("Checking i=" .. i .. " type= " .. slotType)
-        --printTable(item)
-
-        --if (item == nil or item.maxDamage == 0) then
-        --    print("replace fuel at " .. i)
-        --    reactor.moveItem(i, chestDamagedFuel)
-        --    goto continue
-        --end
-
-        if ((not isNullOrEmpty(item)) and slotType == 'C') then
-            --replace nearly damaged
-            --check if it is already damaged
-            local damaged = (item.maxDamage == 0 or ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8)
-            print("cooler damaged: " .. tostring(damaged))
-            if damaged then
-                disableReactor()
-                print("remove cooler at " .. i)
-                reactor.moveItem(i, chestDamagedCooler)
-                item = nil
+        while true do
+            if masterSwitch.getInput(masterSwitchSide) == 0 then
+                if reactorEnabled then
+                    colorPrint(CYAN, "Master switch is off.")
+                    disableReactor()
+                end
+                coroutine.yield()
+            else
+                break ;
             end
         end
+        checkTemperature()
+
+        local reactorItems = reactor.getAllItems()
+        for i = 0, 53 do
+            local item = reactorItems[i]
+            local slotType = design:slotType(i)
+
+            --print("Checking i=" .. i .. " type= " .. slotType)
+            --printTable(item)
+
+            --if (item == nil or item.maxDamage == 0) then
+            --    print("replace fuel at " .. i)
+            --    reactor.moveItem(i, chestDamagedFuel)
+            --    goto continue
+            --end
+
+            if ((not isNullOrEmpty(item)) and slotType == 'C') then
+                --replace nearly damaged
+                --check if it is already damaged
+                local damaged = (item.maxDamage == 0 or ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8)
+                if damaged then
+                    disableReactor()
+                    colorPrint(GREEN, "Remove cooler at" .. (i + 1))
+                    reactor.moveItem(i + 1, chestDamagedCooler)
+                    item = nil
+                end
+            end
 
             -- 拿出来坏的 fuel
             if ((not isNullOrEmpty(item)) and slotType == 'F') then
@@ -335,16 +365,17 @@ while true do
                 end
             end
 
-        if (isNullOrEmpty(item)) then
-            local newItem = nil
-            local src = nil
-            if slotType == 'F' then
-                newItem = findNonEmptyIndex(chestNewFuel.getAllItems())
-                src = chestNewFuel
-            elseif slotType == 'C' then
-                newItem = findNonEmptyIndex(chestNewCooler.getAllItems())
-                src = chestNewCooler
-            end
+            if (isNullOrEmpty(item)) then
+                disableReactor()
+                local newItem = nil
+                local src = nil
+                if slotType == 'F' then
+                    newItem = findNonEmptyIndex(chestNewFuel.getAllItems())
+                    src = chestNewFuel
+                elseif slotType == 'C' then
+                    newItem = findNonEmptyIndex(chestNewCooler.getAllItems())
+                    src = chestNewCooler
+                end
 
                 if newItem == nil then
                     colorPrint(RED, "Nothing to move!! from " .. src.name)
@@ -355,7 +386,7 @@ while true do
             end
         end
 
-    --开机iff
+        --开机iff
 
         local anyEmpty = false
         for i = 0, 53 do
