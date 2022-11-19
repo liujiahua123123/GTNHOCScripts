@@ -129,3 +129,5 @@ print(#recycleFuelBox.getAllStacks())
 print(#recycleCoolBox.getAllStacks())
 print(#newFuelBox.getAllStacks())
 print(#newCoolBox.getAllStacks())
+
+print(reactor.getAllStacks(SIDES.down))
