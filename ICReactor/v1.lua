@@ -53,7 +53,7 @@ function ReactorDesign:fromTemplate(src)
             end
             counter = counter + 1
         end
-        ::continue::
+        :: continue ::
     end
     if row ~= 6 then
         error("Should have 6 rows")
@@ -84,11 +84,12 @@ end
 ---
 -- Returns the component only if the type and name prefixes match only one in the network
 ---
-local function getComponent(type, idPrefix) -- Get component
+local function getComponent(type, idPrefix)
+    -- Get component
     local matched = 0
     local matchedK = nil
     local matchedV = nil
-    for k,v in pairs(component.list(t)) do
+    for k, v in pairs(component.list(t)) do
         if startsWith(k, idPrefix) then
             matchedK = k
             matchedV = v
@@ -96,7 +97,7 @@ local function getComponent(type, idPrefix) -- Get component
         end
     end
     if matched == 1 then
-        return component.proxy(matchedK,matchedV)
+        return component.proxy(matchedK, matchedV)
     end
     if matched > 1 then
         error("duplicate match for " .. type .. " with prefix " .. idPrefix)
@@ -105,17 +106,26 @@ local function getComponent(type, idPrefix) -- Get component
     end
 end
 
-
 local spareTransposer = getComponent("transposer", "24e")
 local recycleTransposer = getComponent("transposer", "6e")
 local reactorTransposer = getComponent("transposer", "567")
 
+local function getTransposerSide(transposer, side)
+    return {
+        getAllStacks = function()
+            return transposer.getAllStacks(side)
+        end
+    }
+end
 
-local reactor = reactorTransposer.getInput(SIDES.down)
-local recycleFuelBox = recycleTransposer.getInput(SIDES.top)
-local recycleCoolBox = recycleTransposer.getInput(SIDES.west)
-local newFuelBox = spareTransposer.getInput(SIDES.top)
-local newCoolBox = spareTransposer.getInput(SIDES.west)
+local reactor = getTransposerSide(reactorTransposer, SIDES.down)
+local recycleFuelBox = getTransposerSide(recycleTransposer, SIDES.top)
+local recycleCoolBox = getTransposerSide(recycleTransposer, SIDES.west)
+local newFuelBox = getTransposerSide(spareTransposer, SIDES.top)
+local newCoolBox = getTransposerSide(spareTransposer, SIDES.west)
 
-print(reactor.getStacks)
-print(reactor.getAllStacks)
+print(#reactor.getAllStacks())
+print(#recycleFuelBox.getAllStacks())
+print(#recycleCoolBox.getAllStacks())
+print(#newFuelBox.getAllStacks())
+print(#newCoolBox.getAllStacks())
