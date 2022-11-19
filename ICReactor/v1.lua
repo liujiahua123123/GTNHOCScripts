@@ -155,6 +155,8 @@ while true do
             needToReplace = true
         elseif (slotType == 'C') then
             --replace nearly damaged
+            printTable(item)
+
             local damaged = ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8
             if damaged then
                 print("replace cool at " .. i)
