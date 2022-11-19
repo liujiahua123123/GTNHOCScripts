@@ -79,7 +79,11 @@ end
 local function startsWith(text, prefix)
     return text:find(prefix, 1, true) == 1
 end
-
+local function printTable(table)
+    for k, v in pairs(table) do
+        print(k, v)
+    end
+end
 
 ---
 -- Returns the component only if the type and name prefixes match only one in the network
@@ -112,9 +116,11 @@ local reactorTransposer = getComponent("transposer", "567")
 
 local function getTransposerSide(transposer, side)
     return {
-        getAllStacks = function()
-            return transposer.getAllStacks(side)
-        end
+        getAllItems = function()
+            return transposer.getAllStacks(side).getAll()
+        end,
+        transposer = transposer,
+        side = side
     }
 end
 
@@ -125,13 +131,4 @@ local recycleCoolBox = getTransposerSide(recycleTransposer, SIDES.west)
 local newFuelBox = getTransposerSide(spareTransposer, SIDES.top)
 local newCoolBox = getTransposerSide(spareTransposer, SIDES.west)
 
-print(#reactor.getAllStacks().getAll())
-print(#recycleFuelBox.getAllStacks().getAll())
-print(#recycleCoolBox.getAllStacks().getAll())
-print(#newFuelBox.getAllStacks().getAll())
-print(#newCoolBox.getAllStacks().getAll())
-
-print(reactorTransposer.getAllStacks(SIDES.down))
-print(reactorTransposer.getAllStacks(SIDES.down).getAll())
-print(reactorTransposer.getAllStacks(SIDES.down).getAll()[0])
-print(#reactorTransposer.getAllStacks(SIDES.down).getAll())
+printTable(reactor.getAllItems()[0])
