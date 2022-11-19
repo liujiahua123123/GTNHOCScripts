@@ -25,6 +25,7 @@ local SIDES = {
 ReactorDesign = {
     fuel_slots = {},
     cool_slots = {},
+    mapping = {},
 }
 
 function ReactorDesign:fromTemplate(src)
@@ -51,6 +52,7 @@ function ReactorDesign:fromTemplate(src)
             else
                 error("Unknown type " .. type)
             end
+            self.mapping[counter] = type
             counter = counter + 1
         end
         :: continue ::
@@ -71,6 +73,9 @@ function ReactorDesign:numOfFuel()
 end
 function ReactorDesign:numOfCool()
     return #self.cool_slots
+end
+function ReactorDesign:slotType(slotNum)
+    return self.mapping[slotNum]
 end
 
 ---
@@ -132,4 +137,34 @@ local recycleCoolBox = getTransposerSide(recycleTransposer, SIDES.west)
 local newFuelBox = getTransposerSide(spareTransposer, SIDES.top)
 local newCoolBox = getTransposerSide(spareTransposer, SIDES.west)
 
-printTable(reactor.getAllItems()[0])
+local design = ReactorDesign:fromTemplate(
+        [[CFFFCFFFC
+              FFCFFFCFF
+              CFFFCFFFC
+              FFCFFFCFF
+              CFFFCFFFC
+              FFCFFFCFF]])
+
+while true do
+    local reactorItems = reactor.getAllItems()
+    for i = 0, 54 do
+        local item = reactorItems[i]
+        local slotType = design:slotType(i)
+        local needToReplace = false
+        if (item == nil or item.maxDamage == 0) then
+            needToReplace = true
+        elseif (slotType == 'C') then
+            --replace nearly damaged
+            local damaged = ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8
+            if damaged then
+                print("replace cool at " .. i)
+                needToReplace = true
+            end
+        end
+
+        if needToReplace then
+
+        end
+    end
+end
+
