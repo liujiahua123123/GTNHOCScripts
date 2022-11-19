@@ -98,5 +98,8 @@ local function getComponent(type, idPrefix) -- Get component
 end
 
 
-print(getComponent("transposer", "24e"))
-print(getComponent("transposer", "6e"))
+local left = getComponent("transposer", "24e")
+local right = getComponent("transposer", "6e")
+
+print(left.address)
+print(right.address)
