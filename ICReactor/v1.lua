@@ -5,6 +5,14 @@ local serialization = require("serialization")
 local term = require("term")
 local coroutine = require("coroutine")
 
+local SIDES = {
+    down = 0,
+    top = 1,
+    north = 2,
+    south = 3,
+    west = 4,
+    east = 5
+}
 ---
 -- CONST as Config
 ---
@@ -100,5 +108,14 @@ end
 
 local spareTransposer = getComponent("transposer", "24e")
 local recycleTransposer = getComponent("transposer", "6e")
-local nuclearTransposer = getComponent("transposer", "567")
+local reactorTransposer = getComponent("transposer", "567")
 
+
+local reactor = reactorTransposer.getInput(SIDES.down)
+local recycleFuelBox = recycleTransposer.getInput(SIDES.top)
+local recycleCoolBox = recycleTransposer.getInput(SIDES.west)
+local newFuelBox = spareTransposer.getInput(SIDES.top)
+local newCoolBox = spareTransposer.getInput(SIDES.west)
+
+print(reactor.getStacks)
+print(reactor.getAllStacks)
