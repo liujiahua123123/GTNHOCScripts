@@ -98,8 +98,7 @@ local function getComponent(type, idPrefix) -- Get component
 end
 
 
-local left = getComponent("transposer", "24e")
-local right = getComponent("transposer", "6e")
+local spareTransposer = getComponent("transposer", "24e")
+local recycleTransposer = getComponent("transposer", "6e")
+local nuclearTransposer = getComponent("transposer", "567")
 
-print(left.address)
-print(right.address)
