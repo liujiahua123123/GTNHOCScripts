@@ -124,7 +124,8 @@ local function getTransposerSide(transposer, side)
     }
 end
 
--- rm v1.lua && wget http://127.0.0.1/mc/v1.lua && v1
+-- rm v1.lua && wget http://192.168.5.102/mc/v1.lua && v1
+
 local reactor = getTransposerSide(reactorTransposer, SIDES.down)
 local recycleFuelBox = getTransposerSide(recycleTransposer, SIDES.top)
 local recycleCoolBox = getTransposerSide(recycleTransposer, SIDES.west)
