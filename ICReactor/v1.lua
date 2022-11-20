@@ -237,8 +237,9 @@ function colorPrint(color, string)
 end
 
 local transposer = getComponent("transposer", "5f6")
-local masterSwitch = getComponent("redstone", "7dd")
-local masterSwitchSide = SIDES.top
+local masterSwitch = getComponent("redstone", "221")
+local masterSwitchSide = SIDES.south
+local backupEnergySide = SIDES.north
 
 local reactorThermostat = getComponent("redstone", "ba1")
 local reactorThermostatSide = SIDES.down
@@ -261,11 +262,11 @@ local design = ReactorDesign:fromTemplate(
               CFFFCFFFC
               FFCFFFCFF]])
 
-function initReactor()
+function initSystem()
+    print("Backup energy: " .. tostring(masterSwitch.getInput(backupEnergySide)))
+    print("Master switch: " .. tostring(masterSwitch.getInput(masterSwitchSide)))
     disableReactor()
 end
-
-initReactor()
 
 function disableReactor()
     reactorController.setOutput(enableReactorSide, 0)
@@ -311,6 +312,8 @@ local function keyDown(t)
     return result
 end
 
+local coolerTemperatureThreshold = 0.85
+
 local function checker()
     while true do
         while true do
@@ -324,7 +327,15 @@ local function checker()
                 break ;
             end
         end
+
         checkTemperature()
+
+        local disableReactorSafe = function()
+            if reactorEnabled then
+                disableReactor()
+                coroutine.yield()
+            end
+        end
 
         local reactorItems = reactor.getAllItems()
         for i = 0, 53 do
@@ -343,10 +354,10 @@ local function checker()
             if ((not isNullOrEmpty(item)) and slotType == 'C') then
                 --replace nearly damaged
                 --check if it is already damaged
-                local damaged = (item.maxDamage == 0 or ((0.1 + item.damage) / (0.1 + item.maxDamage)) > 0.8)
+                local damaged = (item.maxDamage == 0 or ((0.1 + item.damage) / (0.1 + item.maxDamage)) > coolerTemperatureThreshold)
                 if damaged then
-                    disableReactor()
-                    colorPrint(GREEN, "Remove cooler at" .. (i + 1))
+                    disableReactorSafe()
+                    colorPrint(GREEN, "Remove cooler at " .. (i + 1))
                     reactor.moveItem(i + 1, chestDamagedCooler)
                     item = nil
                 end
@@ -356,15 +367,15 @@ local function checker()
             if ((not isNullOrEmpty(item)) and slotType == 'F') then
                 local damaged = (item.maxDamage == 0)
                 if damaged then
-                    disableReactor()
-                    colorPrint(GREEN, "Remove fuel at" .. (i + 1))
+                    disableReactorSafe()
+                    colorPrint(GREEN, "Remove fuel at " .. (i + 1))
                     reactor.moveItem(i + 1, chestDamagedFuel)
                     item = nil
                 end
             end
 
             if (isNullOrEmpty(item)) then
-                disableReactor()
+                disableReactorSafe()
                 local newItem = nil
                 local src = nil
                 if slotType == 'F' then
@@ -405,8 +416,17 @@ end
 
 local reactorThread = coroutine.create(checker)
 
+initSystem()
+
 while true do
     coroutine.resume(reactorThread)
+
+    if masterSwitch.getInput(backupEnergySide) == 0 then
+        colorPrint(RED, "No backup energy!")
+        disableReactor()
+        return
+    end
+
     local key = keyDown(1) -- capture key
     if key == 115 then
         colorPrint(RED, "BYE!")
