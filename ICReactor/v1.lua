@@ -261,6 +261,15 @@ local design = ReactorDesign:fromTemplate(
               FFCFFFCFF
               CFFFCFFFC
               FFCFFFCFF]])
+local tes_design = ReactorDesign:fromTemplate(
+        [[FFCFFCFFC
+              CFFFFCFFF
+              FFFCFFFCF
+              FCFFFCFFF
+              FFFCFFFFC
+              CFFCFFCFF
+        ]]
+)
 
 function initSystem()
     print("Backup energy: " .. tostring(masterSwitch.getInput(backupEnergySide)))
