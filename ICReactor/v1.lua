@@ -278,6 +278,7 @@ local tes_design = ReactorDesign:fromTemplate(
 function initSystem()
     print("Backup energy: " .. tostring(masterSwitch.getInput(backupEnergySide)))
     print("Master switch: " .. tostring(masterSwitch.getInput(masterSwitchSide)))
+    print("Energy station: " .. tostring(masterSwitch.getInput(energyStationSide)))
     disableReactor()
 end
 
@@ -324,8 +325,6 @@ local function keyDown(t)
     end
     return result
 end
-
-
 
 local enableReactorCounter = 0
 
