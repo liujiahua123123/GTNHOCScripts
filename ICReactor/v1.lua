@@ -5,6 +5,9 @@ local serialization = require("serialization")
 local term = require("term")
 local coroutine = require("coroutine")
 
+local coolerTemperatureThreshold = 0.85
+local enableReactorByEnergyLevelInertia = 60
+
 local SIDES = {
     down = 0,
     top = 1,
@@ -240,6 +243,7 @@ local transposer = getComponent("transposer", "5f6")
 local masterSwitch = getComponent("redstone", "221")
 local masterSwitchSide = SIDES.south
 local backupEnergySide = SIDES.north
+local energyStationSide = SIDES.west
 
 local reactorThermostat = getComponent("redstone", "ba1")
 local reactorThermostatSide = SIDES.down
@@ -321,7 +325,9 @@ local function keyDown(t)
     return result
 end
 
-local coolerTemperatureThreshold = 0.85
+
+
+local enableReactorCounter = 0
 
 local function checker()
     while true do
@@ -334,6 +340,22 @@ local function checker()
                 coroutine.yield()
             else
                 break ;
+            end
+        end
+
+        while true do
+            if masterSwitch.getInput(energyStationSide) ~= 0 then
+                enableReactorCounter = enableReactorByEnergyLevelInertia
+            end
+            if enableReactorCounter == 0 then
+                if reactorEnabled then
+                    colorPrint(CYAN, "Energy is full!")
+                    disableReactor()
+                end
+                coroutine.yield()
+            else
+                enableReactorCounter = enableReactorCounter - 1
+                break
             end
         end
 
