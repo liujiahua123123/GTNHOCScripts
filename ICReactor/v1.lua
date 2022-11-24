@@ -397,6 +397,10 @@ local function checker()
             -- 拿出来坏的 fuel
             if ((not isNullOrEmpty(item)) and slotType == 'F') then
                 local damaged = (item.maxDamage == 0)
+                if startsWith(item.name, "阳光") then
+                    damaged = true
+                end
+
                 if damaged then
                     disableReactorSafe()
                     colorPrint(GREEN, "Remove fuel at " .. (i + 1))
