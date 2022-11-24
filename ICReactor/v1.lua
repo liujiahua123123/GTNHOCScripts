@@ -395,10 +395,8 @@ local function checker()
 
             -- 拿出来坏的 fuel
             if ((not isNullOrEmpty(item)) and slotType == 'F') then
-                local damaged = (item.maxDamage == 0)
-                if startsWith(item.name, "阳光") then
-                    damaged = true
-                end
+                --阳光化合物
+                local damaged = (item.maxDamage == 0) or (item.maxDamage == 1)
 
                 if damaged then
                     disableReactorSafe()
