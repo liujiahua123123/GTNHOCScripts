@@ -397,7 +397,7 @@ local function checker()
             if ((not isNullOrEmpty(item)) and slotType == 'F') then
                 --阳光化合物
                 local damaged = (item.maxDamage == 0) or (item.maxDamage == 1)
-
+                print(item.name)
                 if damaged then
                     disableReactorSafe()
                     colorPrint(GREEN, "Remove fuel at " .. (i + 1))
