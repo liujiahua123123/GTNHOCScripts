@@ -2,6 +2,23 @@ local os = require("os");
 local component = require("component");
 
 
+local function startsWith(text, prefix)
+    return text:find(prefix, 1, true) == 1
+end
+
+local function printTable(table)
+    if table == nil then
+        print("nil table")
+        return
+    end
+    if isNullOrEmpty(table) then
+        print("empty table")
+        return
+    end
+    for k, v in pairs(table) do
+        print(k, v)
+    end
+end
 ---
 -- Returns the component only if the type and name prefixes match only one in the network
 ---
@@ -31,3 +48,4 @@ end
 
 local ob = getComponent("weather_obelisk");
 print(ob);
+printTable(ob);
